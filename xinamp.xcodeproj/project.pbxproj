@@ -18,6 +18,7 @@
 		35A75EBD244B502D00EEB4CD /* MediaLibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = 35A75EBC244B502D00EEB4CD /* MediaLibrary.m */; };
 		35CCF554245E84760079C3BD /* MediaPlayback.m in Sources */ = {isa = PBXBuildFile; fileRef = 35CCF553245E84760079C3BD /* MediaPlayback.m */; };
 		35CCF557245F9AF80079C3BD /* MediaNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 35CCF556245F9AF80079C3BD /* MediaNotification.m */; };
+		35CCF55A245FE0B20079C3BD /* UIImage+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 35CCF559245FE0B20079C3BD /* UIImage+Utils.m */; };
 		35D1D9462441BD8C00893E29 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D1D9452441BD8C00893E29 /* libiconv.tbd */; };
 		35D1D9492441C2C300893E29 /* PlatformOSInit.m in Sources */ = {isa = PBXBuildFile; fileRef = 35D1D9472441C2C300893E29 /* PlatformOSInit.m */; };
 		35D1D94B2441C7DA00893E29 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 35D1D94A2441C7D900893E29 /* libc++.tbd */; };
@@ -77,6 +78,8 @@
 		35CCF553245E84760079C3BD /* MediaPlayback.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MediaPlayback.m; sourceTree = "<group>"; };
 		35CCF555245F94C90079C3BD /* MediaNotification.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MediaNotification.h; sourceTree = "<group>"; };
 		35CCF556245F9AF80079C3BD /* MediaNotification.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MediaNotification.m; sourceTree = "<group>"; };
+		35CCF558245FE09D0079C3BD /* UIImage+Utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIImage+Utils.h"; sourceTree = "<group>"; };
+		35CCF559245FE0B20079C3BD /* UIImage+Utils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Utils.m"; sourceTree = "<group>"; };
 		35D1D9452441BD8C00893E29 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		35D1D9472441C2C300893E29 /* PlatformOSInit.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PlatformOSInit.m; sourceTree = "<group>"; };
 		35D1D9482441C2C300893E29 /* PlatformOSInit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlatformOSInit.h; sourceTree = "<group>"; };
@@ -301,6 +304,8 @@
 				3569C859245449D400480CC2 /* NSMutableArray+Shuffle.h */,
 				3569C858245449D400480CC2 /* NSMutableArray+Shuffle.m */,
 				35A75EB9244B4DBE00EEB4CD /* SynthesizeSingleton.h */,
+				35CCF558245FE09D0079C3BD /* UIImage+Utils.h */,
+				35CCF559245FE0B20079C3BD /* UIImage+Utils.m */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -452,6 +457,7 @@
 				35D1D9492441C2C300893E29 /* PlatformOSInit.m in Sources */,
 				3569C8552453CE1700480CC2 /* MediaCollection.m in Sources */,
 				35E705B82431C68B001B561A /* main.m in Sources */,
+				35CCF55A245FE0B20079C3BD /* UIImage+Utils.m in Sources */,
 				35CCF554245E84760079C3BD /* MediaPlayback.m in Sources */,
 				3569C85A245449D400480CC2 /* NSMutableArray+Shuffle.m in Sources */,
 				35CCF557245F9AF80079C3BD /* MediaNotification.m in Sources */,

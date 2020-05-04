@@ -16,6 +16,7 @@
 #import "iPodMediaItem.h"
 #import "MediaSchema.h"
 #import "MediaNotification.h"
+#import "UIImage+Utils.h"
 
 
 @interface LibraryController () {
@@ -30,11 +31,9 @@
 @implementation LibraryController
 
 - (void) dealloc {
-    
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:kMediaItemChangedNotification
                                                   object:nil];
-    
     self->_mediaSchema = nil;
     self->_mediaItems = nil;
 }
@@ -56,6 +55,10 @@
             if (status == MPMediaLibraryAuthorizationStatusAuthorized) {
                 self->_mediaSchema = [MediaSchema forIPodAllSongs];
                 self->_mediaItems = [self->_mediaSchema loadMediaItems];
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.tableView reloadData];
+                });
             }
         }];
     } else {
@@ -101,6 +104,12 @@
     cell.title.text = [mediaItem title];
     cell.subtitle.text = [mediaItem albumTitle];
     cell.artwork.image = [UIImage imageNamed:@"AlbumIcon"];
+    //cell.artwork.image = [UIImage imageByDrawingText:[mediaItem title] color:[UIColor darkTextColor] size:CGSizeMake(60, 60) fontSize:9];
+    
+    UIView *cellBg = [[UIView alloc] init];
+    cellBg.backgroundColor = [UIColor colorWithRed:(76.0/255.0) green:(161.0/255.0) blue:(255.0/255.0) alpha:0.8];
+    cellBg.layer.masksToBounds = YES;
+    cell.selectedBackgroundView = cellBg;
     
     return cell;
 }

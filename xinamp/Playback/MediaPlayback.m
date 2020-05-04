@@ -137,9 +137,9 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
     
     g_print("Creating pipeline\n");
 
-    playbin = gst_element_factory_make("playbin3", "pipeline");
+    playbin = gst_element_factory_make("playbin", "pipeline");
     converter = gst_element_factory_make ("audioconvert", "convert");
-    equalizer = gst_element_factory_make ("equalizer-10bands", "equalizer");
+    equalizer = gst_element_factory_make ("equalizer-3bands", "equalizer");
     audiosink = gst_element_factory_make ("osxaudiosink", "audio_sink");
     if (!playbin || !converter || !equalizer || !audiosink) {
         g_printerr("Not all elements could be created.\n");
