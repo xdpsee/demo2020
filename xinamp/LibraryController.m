@@ -131,7 +131,7 @@
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[nextIndex unsignedIntegerValue] inSection:0];
         [self.tableView selectRowAtIndexPath:indexPath
                                     animated:YES
-                              scrollPosition:UITableViewScrollPositionBottom];
+                              scrollPosition:UITableViewScrollPositionMiddle];
     }
 }
 
