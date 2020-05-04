@@ -10,8 +10,8 @@
 #define __MediaNotification_h__
 
 
-extern NSString* const kMediaItemChangedNotification;
-extern NSString* const kMediaItemChangedNotificationKeyPrevIndex;
-extern NSString* const kMediaItemChangedNotificationKeyNextIndex;
+extern NSString *const kMediaItemChangedNotification;
+extern NSString *const kMediaItemChangedNotificationKeyPrevIndex;
+extern NSString *const kMediaItemChangedNotificationKeyNextIndex;
 
 #endif /* __MediaNotification_h__ */

@@ -13,21 +13,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MediaPlayback : NSObject
 
-@property (nonatomic) id<MediaPlaybackDelegate> delegate;
+@property(nonatomic) id <MediaPlaybackDelegate> delegate;
 
-@property (nonatomic, readonly) const char* uri;
+@property(nonatomic, readonly) const char *uri;
 
-@property (atomic, readwrite) BOOL loop;
+@property(atomic, readwrite) BOOL loop;
 
-- (id) initWithUri:(const char*) uri delegate:(id<MediaPlaybackDelegate>)delegate start:(BOOL) start;
+- (id)initWithUri:(const char *)uri delegate:(id <MediaPlaybackDelegate>)delegate start:(BOOL)start;
 
-- (void) play;
+- (void)play;
 
-- (void) pause;
+- (void)pause;
 
-- (void) setPosition:(NSInteger)milliseconds;
+- (void)setPosition:(NSInteger)milliseconds;
 
-- (void) stop;
+- (void)stop;
 
 @end
 

@@ -12,8 +12,8 @@
 #import "MediaNotification.h"
 
 @interface MediaPlayer () <MediaPlaybackDelegate> {
-    
-    MediaPlayback   *_plaback;
+
+    MediaPlayback *_plaback;
     MediaCollection *_mediaCollection;
 }
 - (id)init;
@@ -23,14 +23,14 @@
 @implementation MediaPlayer
 IMPLEMENT_SINGLETON(MediaPlayer)
 
-- (void) touch {
+- (void)touch {
     NSLog(@"MediaPlayer instance");
 }
 
 
 - (id)init {
     self = [super init];
-    
+
     return self;
 }
 
@@ -110,17 +110,17 @@ IMPLEMENT_SINGLETON(MediaPlayer)
 }
 
 - (void)playbackState:(GstState)oldState changed:(GstState)newState {
-    
+
 }
 
-- (void)playbackCompleted:(const char*)uri {
+- (void)playbackCompleted:(const char *)uri {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        
+
         __block NSInteger prevIndex = self->_mediaCollection.currMediaIndex;
-        
+
         [self->_plaback stop];
         self->_plaback = nil;
-        
+
         dispatch_async(dispatch_get_main_queue(), ^{
             id <MediaItem> currMediaItem = [self->_mediaCollection currMediaItem];
             id <MediaItem> mediaItem = [self->_mediaCollection nextMediaItem];
@@ -128,9 +128,9 @@ IMPLEMENT_SINGLETON(MediaPlayer)
                 self->_plaback = [[MediaPlayback alloc] initWithUri:[mediaItem.uri UTF8String]
                                                            delegate:self
                                                               start:TRUE];
-                NSDictionary* userInfo = @{
-                    kMediaItemChangedNotificationKeyPrevIndex:[NSNumber numberWithInteger:prevIndex],
-                    kMediaItemChangedNotificationKeyNextIndex:[NSNumber numberWithInteger:self->_mediaCollection.currMediaIndex]
+                NSDictionary *userInfo = @{
+                        kMediaItemChangedNotificationKeyPrevIndex: [NSNumber numberWithInteger:prevIndex],
+                        kMediaItemChangedNotificationKeyNextIndex: [NSNumber numberWithInteger:self->_mediaCollection.currMediaIndex]
                 };
                 [[NSNotificationCenter defaultCenter] postNotificationName:kMediaItemChangedNotification
                                                                     object:self
@@ -141,11 +141,11 @@ IMPLEMENT_SINGLETON(MediaPlayer)
 }
 
 - (void)playbackError:(const char *)error {
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         printf("MediaPlayback error ocurred: %s\n", error);
     });
-    
+
 }
 
 

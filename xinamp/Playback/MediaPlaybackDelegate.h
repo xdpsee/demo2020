@@ -8,13 +8,13 @@
 
 @protocol MediaPlaybackDelegate <NSObject>
 
-- (void)playbackState:(GstState) oldState changed:(GstState)newState;
+- (void)playbackState:(GstState)oldState changed:(GstState)newState;
 
 - (void)playbackProgressChanged:(int)pos duration:(int)duration;
 
-- (void)playbackCompleted:(const char*) uri;
+- (void)playbackCompleted:(const char *)uri;
 
-- (void)playbackError:(const char*)error;
+- (void)playbackError:(const char *)error;
 
 @end
 

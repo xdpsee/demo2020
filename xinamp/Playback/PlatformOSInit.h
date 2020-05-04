@@ -32,7 +32,7 @@ G_PASTE(g_io_, G_PASTE(name, _load)) (NULL)
 
 //#define GST_IOS_GIO_MODULE_GNUTLS
 
-void platformOSInit (void);
+void platformOSInit(void);
 
 G_END_DECLS
 

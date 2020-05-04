@@ -17,23 +17,23 @@
 
 DEFINE_SINGLETON(MediaPlayer)
 
-- (MediaPlayModelEnum) playMode;
+- (MediaPlayModelEnum)playMode;
 
-- (void) playMediaItem:(id<MediaItem>) mediaItem;
+- (void)playMediaItem:(id <MediaItem>)mediaItem;
 
-- (void) playMediaCollection:(MediaCollection*) mediaCollection;
+- (void)playMediaCollection:(MediaCollection *)mediaCollection;
 
-- (void) playMediaCollection:(MediaCollection*) mediaCollection index:(NSInteger)index;
+- (void)playMediaCollection:(MediaCollection *)mediaCollection index:(NSInteger)index;
 
-- (void) pause;
+- (void)pause;
 
-- (void) play;
+- (void)play;
 
-- (MediaCollection*) currMediaCollection;
+- (MediaCollection *)currMediaCollection;
 
-- (id<MediaItem>) currMediaItem;
+- (id <MediaItem>)currMediaItem;
 
-- (void) touch;
+- (void)touch;
 
 @end
 

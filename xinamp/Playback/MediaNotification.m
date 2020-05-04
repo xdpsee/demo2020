@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "MediaNotification.h"
 
-NSString* const kMediaItemChangedNotification = @"media-item-changed";
-NSString* const kMediaItemChangedNotificationKeyPrevIndex = @"media-item-changed:prev";
-NSString* const kMediaItemChangedNotificationKeyNextIndex = @"media-item-changed:next";
+NSString *const kMediaItemChangedNotification = @"media-item-changed";
+NSString *const kMediaItemChangedNotificationKeyPrevIndex = @"media-item-changed:prev";
+NSString *const kMediaItemChangedNotificationKeyNextIndex = @"media-item-changed:next";
 
