@@ -21,29 +21,29 @@ GST_DEBUG_CATEGORY_STATIC (debug_category);
 @end
 
 @implementation MediaPlayback {
-    GstElement* playbin;
+    GstElement* pipeline;
+    GstElement* source;
     GstElement* equalizer;
     GstElement* converter;
     GstElement* audiosink;
     
     GMainContext* context;
     GMainLoop* main_loop;
-    
-    id<MediaPlaybackDelegate> _delegate;
-    
+
     gboolean _loop;
     const char* _uri;
     GstState state;
     GstState target_state;
-    gint64 duration;             /* Cached clip duration */
-    gint64 desired_position;     /* Position to seek to, once the pipeline is running */
-    GstClockTime last_seek_time; /* For seeking overflow prevention (throttling) */
-    gboolean is_live;            /* Live streams do not use buffering */
-    
+    gint64 duration;
+    gint64 desired_position;
+    GstClockTime last_seek_time;
+    gboolean is_live;
     
     volatile gboolean initialized;
     volatile gboolean exited;
     NSCondition* initCond;
+
+    id<MediaPlaybackDelegate> _delegate;
 }
 
 @synthesize delegate = _delegate;
@@ -101,7 +101,7 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
         @synchronized (self) {
             if (initialized && main_loop && !quiting) {
                 if (g_main_loop_is_running(main_loop)) {
-                    gst_element_set_state(playbin, GST_STATE_NULL);
+                    gst_element_set_state(pipeline, GST_STATE_NULL);
                     g_main_loop_quit(main_loop);
                     quiting = TRUE;
                 }
@@ -114,12 +114,12 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
 
 - (void) play {
     target_state = GST_STATE_PLAYING;
-    is_live = (gst_element_set_state (playbin, GST_STATE_PLAYING) == GST_STATE_CHANGE_NO_PREROLL);
+    is_live = (gst_element_set_state (pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_NO_PREROLL);
 }
 
 - (void) pause {
     target_state = GST_STATE_PAUSED;
-    is_live = (gst_element_set_state (playbin, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
+    is_live = (gst_element_set_state (pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
 }
 
 -(void) setPosition:(NSInteger)milliseconds
@@ -137,19 +137,21 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
     
     g_print("Creating pipeline\n");
 
-    playbin = gst_element_factory_make("playbin3", "pipeline");
+    pipeline = gst_pipeline_new("pipeline");
+    source = gst_element_factory_make("uridecodebin", "source");
     converter = gst_element_factory_make ("audioconvert", "convert");
-    equalizer = gst_element_factory_make ("equalizer-10bands", "equalizer");
+    equalizer = gst_element_factory_make ("equalizer-3bands", "equalizer");
     audiosink = gst_element_factory_make ("osxaudiosink", "audio_sink");
-    if (!playbin || !converter || !equalizer || !audiosink) {
+    if (!pipeline || !source || !converter || !equalizer || !audiosink) {
         g_printerr("Not all elements could be created.\n");
-        g_object_safe_unref(playbin);
+        g_object_safe_unref(pipeline);
+        g_object_safe_unref(source);
         g_object_safe_unref(converter);
         g_object_safe_unref(equalizer);
         g_object_safe_unref(audiosink);
         [initCond lock];
         exited = TRUE;
-        g_print("initCond signal, exited = TRUE\n");
+        g_print("initCond signal, make elements, exited = TRUE\n");
         [initCond signal];
         [initCond unlock];
         return;
@@ -159,26 +161,24 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
     context = g_main_context_new();
     g_main_context_push_thread_default(context);
     
-    /* Create the sink bin, add the elements and link them */
-    GstElement* bin = gst_bin_new ("audio_sink_bin");
-    gst_bin_add_many (GST_BIN (bin), converter, equalizer, audiosink, NULL);
-    gst_element_link_many(converter, equalizer, audiosink, NULL);
-    GstPad* pad = gst_element_get_static_pad (converter, "sink");
-    GstPad* ghost_pad = gst_ghost_pad_new ("sink", pad);
-    gst_pad_set_active (ghost_pad, TRUE);
-    gst_element_add_pad (bin, ghost_pad);
-    gst_object_unref (pad);
+    /* Add the elements and link them */
+    gst_bin_add_many (GST_BIN (pipeline), source, converter, equalizer, audiosink, NULL);
+    if (!gst_element_link_many(converter, equalizer, audiosink, NULL)) {
+        g_printerr("Link converter,equalizer,audiosink elements error.\n");
+        g_object_safe_unref(pipeline);
+        [initCond lock];
+        exited = TRUE;
+        g_print("initCond signal, link error, exited = TRUE\n");
+        [initCond signal];
+        [initCond unlock];
+        return;
+    }
     
     /* Configure the equalizer */
     g_object_set (G_OBJECT (equalizer), "band1", (gdouble)-24.0, NULL);
     g_object_set (G_OBJECT (equalizer), "band2", (gdouble)-24.0, NULL);
-
-    /* Set playbin's audio sink to be our sink bin */
-    g_object_set (GST_OBJECT (playbin), "audio-sink", bin, NULL);
-    g_object_set(playbin, "uri", _uri, NULL);
-    //g_object_set(playbin, "ring-buffer-max-size", (guint64) 1024 * 16, NULL);
     
-    GstBus* bus = gst_element_get_bus(playbin);
+    GstBus* bus = gst_element_get_bus(pipeline);
     GSource* bus_source = gst_bus_create_watch(bus);
     g_source_set_callback (bus_source, (GSourceFunc) gst_bus_async_signal_func, NULL, NULL);
     g_source_attach (bus_source, context);
@@ -197,7 +197,10 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
     g_source_attach (timeout_source, context);
     g_source_unref (timeout_source);
     
-    gst_element_set_state(playbin, self->target_state);
+    g_signal_connect (source, "pad-added", G_CALLBACK (pad_added_handler), (__bridge void*)self);
+    g_object_set(source, "uri", _uri, NULL);
+    
+    gst_element_set_state(pipeline, self->target_state);
     main_loop = g_main_loop_new (context, FALSE);
     
     [initCond lock];
@@ -214,15 +217,60 @@ static void g_object_safe_unref(gpointer object) { if (object) g_object_unref(ob
     g_main_context_unref (context);
     
     @synchronized (self) {
-        gst_element_set_state (playbin, GST_STATE_NULL);
+        gst_element_set_state (pipeline, GST_STATE_NULL);
         g_main_loop_unref (main_loop);
         main_loop = NULL;
     }
     
-    gst_object_unref(playbin);
+    gst_object_unref(pipeline);
     
     exited = TRUE;
     g_print("Exited pipeline\n");
+}
+
+#pragma mark -- Pipeline construct
+
+static void pad_added_handler (GstElement *src, GstPad *new_pad, MediaPlayback *self)
+{
+    GstPad *sink_pad = gst_element_get_static_pad(self->converter, "sink");
+    GstPadLinkReturn ret;
+    GstCaps *new_pad_caps = NULL;
+    GstStructure *new_pad_struct = NULL;
+    const gchar *new_pad_type = NULL;
+
+    g_print ("Received new pad '%s' from '%s':\n", GST_PAD_NAME (new_pad), GST_ELEMENT_NAME (src));
+
+    /* If our converter is already linked, we have nothing to do here */
+    if (gst_pad_is_linked (sink_pad)) {
+    g_print ("We are already linked. Ignoring.\n");
+        goto exit;
+    }
+    
+    /* Check the new pad's type */
+    new_pad_caps = gst_pad_get_current_caps (new_pad);
+    new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
+    new_pad_type = gst_structure_get_name (new_pad_struct);
+    if (!g_str_has_prefix (new_pad_type, "audio/x-raw")) {
+        g_print ("It has type '%s' which is not raw audio. Ignoring.\n", new_pad_type);
+        goto exit;
+    }
+
+    /* Attempt the link */
+    ret = gst_pad_link (new_pad, sink_pad);
+    if (GST_PAD_LINK_FAILED (ret)) {
+        g_print ("Type is '%s' but link failed.\n", new_pad_type);
+    } else {
+        g_print ("Link succeeded (type '%s').\n", new_pad_type);
+    }
+
+    exit:
+    /* Unreference the new pad's caps, if we got them */
+    if (new_pad_caps != NULL) {
+        gst_caps_unref (new_pad_caps);
+    }
+    
+    /* Unreference the sink pad */
+    gst_object_unref (sink_pad);
 }
 
 #pragma mark -- Pipeline callback
@@ -230,7 +278,7 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, MediaPlayback *self)
 {
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
-    if (GST_MESSAGE_SRC (msg) == GST_OBJECT (self->playbin)) {
+    if (GST_MESSAGE_SRC (msg) == GST_OBJECT (self->pipeline)) {
         self->state = new_state;
         gchar *message = g_strdup_printf("State changed to %s", gst_element_state_get_name(new_state));
         g_print("%s\n", message);
@@ -261,7 +309,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, MediaPlayback *self)
 static void eos_cb (GstBus *bus, GstMessage *msg, MediaPlayback *self)
 {
 //    self->target_state = GST_STATE_PAUSED;
-//    self->is_live = (gst_element_set_state (self->playbin, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
+//    self->is_live = (gst_element_set_state (self->pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
 //    execute_seek (0, self);
     
     if (self->_loop) {
@@ -293,11 +341,11 @@ static void buffering_cb (GstBus *bus, GstMessage *msg, MediaPlayback *self) {
     gst_message_parse_buffering (msg, &percent);
     if (percent < 100 && self->target_state >= GST_STATE_PAUSED) {
         gchar * message_string = g_strdup_printf ("Buffering %d%%", percent);
-        gst_element_set_state (self->playbin, GST_STATE_PAUSED);
+        gst_element_set_state (self->pipeline, GST_STATE_PAUSED);
         g_print("%s\n", message_string);
         g_free (message_string);
     } else if (self->target_state >= GST_STATE_PLAYING) {
-        gst_element_set_state (self->playbin, GST_STATE_PLAYING);
+        gst_element_set_state (self->pipeline, GST_STATE_PLAYING);
     } else if (self->target_state >= GST_STATE_PAUSED) {
         g_print("Buffering complete\n");
     }
@@ -306,8 +354,8 @@ static void buffering_cb (GstBus *bus, GstMessage *msg, MediaPlayback *self) {
 /* Called when the clock is lost */
 static void clock_lost_cb (GstBus *bus, GstMessage *msg, MediaPlayback *self) {
     if (self->target_state >= GST_STATE_PLAYING) {
-        gst_element_set_state (self->playbin, GST_STATE_PAUSED);
-        gst_element_set_state (self->playbin, GST_STATE_PLAYING);
+        gst_element_set_state (self->pipeline, GST_STATE_PAUSED);
+        gst_element_set_state (self->pipeline, GST_STATE_PLAYING);
     }
 }
 
@@ -339,7 +387,7 @@ static void execute_seek (gint64 position, MediaPlayback *self) {
         /* Perform the seek now */
         GST_DEBUG ("Seeking to %" GST_TIME_FORMAT, GST_TIME_ARGS (position));
         self->last_seek_time = gst_util_get_timestamp ();
-        gst_element_seek_simple (self->playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT, position);
+        gst_element_seek_simple (self->pipeline, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT, position);
         self->desired_position = GST_CLOCK_TIME_NONE;
     }
 }
@@ -355,15 +403,15 @@ static gboolean delayed_seek_cb (MediaPlayback *self)
 static gboolean refresh_ui (MediaPlayback *self) {
     gint64 position;
 
-    if (!self || !self->playbin || self->state < GST_STATE_PAUSED) {
+    if (!self || !self->pipeline || self->state < GST_STATE_PAUSED) {
         return TRUE;
     }
     
     if (!GST_CLOCK_TIME_IS_VALID (self->duration)) {
-        gst_element_query_duration (self->playbin, GST_FORMAT_TIME, &self->duration);
+        gst_element_query_duration (self->pipeline, GST_FORMAT_TIME, &self->duration);
     }
 
-    if (gst_element_query_position (self->playbin, GST_FORMAT_TIME, &position)) {
+    if (gst_element_query_position (self->pipeline, GST_FORMAT_TIME, &position)) {
         gchar status[64] = {0,};
         memset (status, ' ', sizeof(status) - 1);
         if (position != -1 && self->duration > 0 && self->duration != -1) {

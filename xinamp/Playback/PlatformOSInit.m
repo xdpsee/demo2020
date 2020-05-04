@@ -585,7 +585,7 @@ void platformOSInit (void)
   g_setenv ("XDG_DATA_HOME", resources_dir, TRUE);
   g_setenv ("FONTCONFIG_PATH", resources_dir, TRUE);
     
-    //g_setenv("GST_DEBUG", "GST_REFCOUNTING:5", TRUE);
+    g_setenv("GST_DEBUG", "GST_REFCOUNTING:5", TRUE);
 
   ca_certificates = g_build_filename (resources_dir, "ssl", "certs", "ca-certificates.crt", NULL);
   g_setenv ("CA_CERTIFICATES", ca_certificates, TRUE);

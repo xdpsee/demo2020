@@ -129,8 +129,8 @@ IMPLEMENT_SINGLETON(MediaPlayer)
                                                            delegate:self
                                                               start:TRUE];
                 NSDictionary* userInfo = @{
-                    kMediaItemChangedNotificationKeyPrevIndex:[NSNumber numberWithInteger:prevIndex],
-                    kMediaItemChangedNotificationKeyNextIndex:[NSNumber numberWithInteger:self->_mediaCollection.currMediaIndex]
+                    kMediaItemChangedNotificationKeyPrevIndex: @(prevIndex),
+                    kMediaItemChangedNotificationKeyNextIndex: @(self->_mediaCollection.currMediaIndex)
                 };
                 [[NSNotificationCenter defaultCenter] postNotificationName:kMediaItemChangedNotification
                                                                     object:self
